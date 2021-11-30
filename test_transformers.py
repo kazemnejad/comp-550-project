@@ -23,9 +23,9 @@ test_df.columns = ["text", "labels"]
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
              
 EPOCHS = 5
-model = BertClassifier()
+model = BertClassifier(num_classes=4)
 LR = 1e-6
               
 train(model, train_df, LR, EPOCHS, tokenizer)
 
-evaluate(model, test_iter, tokenizer)
+evaluate(model, test_df, tokenizer)
