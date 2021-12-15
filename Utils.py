@@ -4,6 +4,7 @@ from torch.optim import Adam
 from torch.optim import Adam
 from tqdm import tqdm
 import numpy as np
+torch.autograd.set_detect_anomaly(True)
 
 class Dataset(torch.utils.data.Dataset):
 
@@ -65,7 +66,7 @@ def train(model, train_data, learning_rate, epochs, tokenizer):
 
                 output = model(input_id, mask)
                 
-                batch_loss = criterion(output, train_label)
+                batch_loss = criterion(output, train_label - 1)
                 total_loss_train += batch_loss.item()
                 
                 acc = (output.argmax(dim=1) == train_label).sum().item()
