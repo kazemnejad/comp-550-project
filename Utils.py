@@ -6,6 +6,7 @@ from torch.utils.data.dataset import random_split
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import wandb
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -67,14 +68,15 @@ class Dataset(torch.utils.data.Dataset):
         return batch_texts, batch_y
 
 
-def train(model, train_data, valid_data, tokenizer, hyperparams):
-    train = Dataset(train_data, tokenizer)
+def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams):
+    train_dataset = Dataset(train_data, tokenizer)
+    valid_dataset = Dataset(valid_data, tokenizer)
 
     train_dataloader = torch.utils.data.DataLoader(
-        train, batch_size=hyperparams["batch_size"], shuffle=True
+        train_dataset, batch_size=hyperparams["batch_size"], shuffle=True
     )
     valid_dataloader = torch.utils.data.DataLoader(
-        valid_data, batch_size=hyperparams["batch_size"], shuffle=True
+        valid_dataset, batch_size=hyperparams["batch_size"], shuffle=True
     )
 
     use_cuda = torch.cuda.is_available()
@@ -90,6 +92,9 @@ def train(model, train_data, valid_data, tokenizer, hyperparams):
     for epoch_num in range(hyperparams["epochs"]):
         total_acc_train = 0
         total_loss_train = 0
+        total_acc_valid = 0
+        total_loss_valid = 0
+        best_valid_acc = 0
 
         model.train()
         for train_input, train_label in tqdm(train_dataloader):
@@ -97,7 +102,10 @@ def train(model, train_data, valid_data, tokenizer, hyperparams):
             mask = train_input["attention_mask"].to(device)
             input_id = train_input["input_ids"].squeeze(1).to(device)
 
-            output = model(input_id, mask)
+            embeddings, _ = embedding_model(
+                input_ids=input_id, attention_mask=mask, return_dict=False
+            )
+            output = model(embeddings, mask)
 
             batch_loss = criterion(output, train_label - 1)
             total_loss_train += batch_loss.item()
@@ -109,20 +117,48 @@ def train(model, train_data, valid_data, tokenizer, hyperparams):
             batch_loss.backward()
             optimizer.step()
 
+        wandb.log(
+            {
+                "Train loss": total_loss_train / len(train_data),
+                "Train accuracy": total_acc_train / len(train_data),
+            },
+            commit=False,
+        )
+
         with torch.no_grad():
             for valid_input, valid_label in tqdm(valid_dataloader):
                 valid_label = valid_label.to(device).long()
                 mask = valid_input["attention_mask"].to(device)
                 input_id = valid_input["input_ids"].squeeze(1).to(device)
 
-                output = model(input_id, mask)
+                embeddings, _ = embedding_model(
+                    input_ids=input_id, attention_mask=mask, return_dict=False
+                )
+                output = model(embeddings, mask)
 
                 batch_loss = criterion(output, valid_label - 1)
-                # total_loss_train += batch_loss.item()
+                total_loss_valid += batch_loss.item()
 
-                # acc = (output.argmax(dim=1) == valid_label).sum().item()
-                # total_acc_train += acc
+                acc = (output.argmax(dim=1) == valid_label).sum().item()
+                total_acc_valid += acc
 
+        wandb.log(
+            {
+                "Valid loss": total_loss_valid / len(valid_data),
+                "Valid accuracy": total_acc_valid / len(valid_data),
+            }
+        )
+
+        if total_acc_valid / len(valid_data) > best_valid_acc:
+            wandb.run.summary["best_accuracy"] = total_acc_valid / len(valid_data)
+            best_valid_acc = total_acc_valid / len(valid_data)
+
+            torch.save(model.state_dict(), f"./models/{hyperparams['model']}-best.pt")
+            wandb.log_artifact(
+                f"./models/{hyperparams['model']}-best.pt",
+                name=f"{hyperparams['model']}-best",
+                type="model",
+            )
 
         print(
             f"Epochs: {epoch_num + 1} | Train Loss: {total_loss_train / len(train_data): .3f} \

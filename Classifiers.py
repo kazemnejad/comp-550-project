@@ -31,7 +31,6 @@ class CNNClassifier(nn.Module):
             hyperparams["hidden_dim"] for i in range(hyperparams["num_layers"] - 1)
         ]
         self.kernel_size = hyperparams["kernel_size"]
-        self.embedding_layer = BertModel.from_pretrained("bert-base-cased")
         self.conv_blocks = nn.ModuleList(
             [
                 self.create_conv_block(
@@ -46,11 +45,7 @@ class CNNClassifier(nn.Module):
             nn.Linear(1024, self.num_classes),
         )
 
-    def forward(self, input_id, mask):
-        mask = mask.float()
-        embeddings, _ = self.embedding_layer(
-            input_ids=input_id, attention_mask=mask, return_dict=False
-        )
+    def forward(self, embeddings, mask):
         x = embeddings.detach()
         x = x.permute(0, 2, 1)
         for conv_block in self.conv_blocks:
