@@ -24,11 +24,13 @@ class BertClassifier(nn.Module):
 
 
 class CNNClassifier(nn.Module):
-    def __init__(self, hyperparams, layer_sizes=(768, 768, 768), kernel_size=10):
+    def __init__(self, hyperparams):
         super(CNNClassifier, self).__init__()
         self.num_classes = hyperparams["num_classes"]
-        self.layer_sizes = layer_sizes
-        self.kernel_size = kernel_size
+        self.layer_sizes = [768] + [
+            hyperparams["hidden_dim"] for i in range(hyperparams["num_layers"] - 1)
+        ]
+        self.kernel_size = hyperparams["kernel_size"]
         self.embedding_layer = BertModel.from_pretrained("bert-base-cased")
         self.conv_blocks = nn.ModuleList(
             [
@@ -39,7 +41,7 @@ class CNNClassifier(nn.Module):
             ]
         )
         self.output_layer = nn.Sequential(
-            nn.Linear(layer_sizes[-1], 1024),
+            nn.Linear(self.layer_sizes[-1], 1024),
             nn.ReLU(inplace=False),
             nn.Linear(1024, self.num_classes),
         )
