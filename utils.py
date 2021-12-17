@@ -110,7 +110,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
                 input_ids=input_id, attention_mask=mask, return_dict=False
             )
             with profile(
-                activities=[ProfilerActivity.GPU],
+                activities=[ProfilerActivity.CUDA],
                 record_shapes=True,
                 profile_memory=True,
                 use_cuda=True,
