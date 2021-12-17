@@ -87,6 +87,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
 
     if use_cuda:
         model = model.cuda()
+        embedding_model = embedding_model.cuda()
         criterion = criterion.cuda()
 
     for epoch_num in range(hyperparams["epochs"]):
