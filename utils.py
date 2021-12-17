@@ -100,6 +100,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
         model.train()
         for train_input, train_label in tqdm(train_dataloader):
             train_label = train_label.to(device).long()
+            train_label = train_label - 1
             mask = train_input["attention_mask"].to(device)
             input_id = train_input["input_ids"].squeeze(1).to(device)
 
@@ -108,7 +109,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
             )
             output = model(embeddings, mask)
 
-            batch_loss = criterion(output, train_label - 1)
+            batch_loss = criterion(output, train_label)
             total_loss_train += batch_loss.item()
 
             acc = (output.argmax(dim=1) == train_label).sum().item()
@@ -129,6 +130,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
         with torch.no_grad():
             for valid_input, valid_label in tqdm(valid_dataloader):
                 valid_label = valid_label.to(device).long()
+                valid_label = valid_label - 1
                 mask = valid_input["attention_mask"].to(device)
                 input_id = valid_input["input_ids"].squeeze(1).to(device)
 
@@ -137,7 +139,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
                 )
                 output = model(embeddings, mask)
 
-                batch_loss = criterion(output, valid_label - 1)
+                batch_loss = criterion(output, valid_label)
                 total_loss_valid += batch_loss.item()
 
                 acc = (output.argmax(dim=1) == valid_label).sum().item()
@@ -151,7 +153,7 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
         )
 
         if total_acc_valid / len(valid_data) > best_valid_acc:
-            wandb.run.summary["best_accuracy"] = total_acc_valid / len(valid_data)
+            wandb.run.summary["Best valid accuracy"] = total_acc_valid / len(valid_data)
             best_valid_acc = total_acc_valid / len(valid_data)
 
             torch.save(model.state_dict(), f"./models/{hyperparams['model']}-best.pt")
@@ -163,7 +165,8 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
 
         print(
             f"Epochs: {epoch_num + 1} | Train Loss: {total_loss_train / len(train_data): .3f} \
-                | Train Accuracy: {total_acc_train / len(train_data): .3f}"
+                | Train Accuracy: {total_acc_train / len(train_data): .3f}\
+                | Valid Accuracy: {total_acc_valid / len(valid_data): .3f}"
         )
 
 
