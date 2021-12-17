@@ -113,7 +113,6 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
                 activities=[ProfilerActivity.CUDA],
                 record_shapes=True,
                 profile_memory=True,
-                use_cuda=True,
             ) as prof:
                 with record_function("forward"):
                     output = model(embeddings, mask)
