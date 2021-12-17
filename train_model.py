@@ -7,6 +7,7 @@ import torch
 from torchtext.datasets import AG_NEWS
 import wandb
 import os
+import sys
 
 HYPERPARAMS = {
     "dataset": "AG_NEWS",
@@ -14,14 +15,24 @@ HYPERPARAMS = {
     "valid_prop": 0.15,
     "epochs": 5,
     "lr": 1e-4,
-    "batch_size": 2,
+    "batch_size": 32,
     "model": "cnn",
     "seed": 0,
-    "wandb": True,
+    "wandb": False,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
     "kernel_size": 10,
+}
+
+SWEEP_CONFIG = {
+    "name": "cnn-sweep",
+    "method": "grid",
+    "parameters": {
+        "num_layers": {"values": [2, 4, 6, 8]},
+        "hidden_dim": {"values": [128, 180, 220, 256]},
+        "kernel_size": {"values": [3, 7, 11]},
+    },
 }
 
 MODELS = {
@@ -43,6 +54,12 @@ def train_model():
         )
     else:
         os.environ["WANDB_MODE"] = "dryrun"
+        wandb.init(
+            config=HYPERPARAMS,
+            project="classification_models",
+            entity="comp-555-project",
+            job_type="train-model",
+        )
 
     train_iter, _ = AG_NEWS(root=".data", split=("train", "test"))
 
@@ -79,5 +96,28 @@ def evaluate_model():
     evaluate(model, embedding_model, test_df, tokenizer)
 
 
+def create_sweep():
+    wandb.sweep(
+        SWEEP_CONFIG, entity="comp-555-project", project="classification_models"
+    )
+
+
+def run_agent(sweep_id):
+    wandb.agent(
+        sweep_id,
+        function=train_model,
+        entity="comp-555-project",
+        project="classification_models",
+    )
+
+
 if __name__ == "__main__":
-    train_model()
+    mode = sys.argv[1]
+    print(mode)
+    if not mode or mode == "train":
+        train_model()
+    elif mode == "sweep":
+        create_sweep()
+    elif mode == "agent":
+        sweep_id = sys.argv[2]
+        run_agent(sweep_id)
