@@ -1,6 +1,4 @@
 wandb
-data
-models
 .data
 .vscode
 .DS_Store
