@@ -128,11 +128,13 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
                 with record_function("backward"):
                     batch_loss.backward()
                 optimizer.step()
-            print(
-                prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=25)
-            )
+            print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=25))
             print("\n")
-            print(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=25))
+            print(
+                prof.key_averages().table(
+                    sort_by="self_cuda_memory_usage", row_limit=25
+                )
+            )
 
         wandb.log(
             {
