@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import wandb
 
+from torch.profiler import profile, record_function, ProfilerActivity
+
 torch.autograd.set_detect_anomaly(True)
 
 
@@ -107,17 +109,31 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
             embeddings, _ = embedding_model(
                 input_ids=input_id, attention_mask=mask, return_dict=False
             )
-            output = model(embeddings, mask)
+            with profile(
+                activities=[ProfilerActivity.GPU],
+                record_shapes=True,
+                profile_memory=True,
+                use_cuda=True,
+            ) as prof:
+                with record_function("forward"):
+                    output = model(embeddings, mask)
 
-            batch_loss = criterion(output, train_label)
-            total_loss_train += batch_loss.item()
+                with record_function("loss"):
+                    batch_loss = criterion(output, train_label)
+                total_loss_train += batch_loss.item()
 
-            acc = (output.argmax(dim=1) == train_label).sum().item()
-            total_acc_train += acc
+                acc = (output.argmax(dim=1) == train_label).sum().item()
+                total_acc_train += acc
 
-            model.zero_grad()
-            batch_loss.backward()
-            optimizer.step()
+                model.zero_grad()
+                with record_function("backward"):
+                    batch_loss.backward()
+                optimizer.step()
+            print(
+                prof.key_averages().table(sort_by="self_cpu_memory_usage", row_limit=25)
+            )
+            print("\n")
+            print(prof.key_averages().table(sort_by="cpu_memory_usage", row_limit=25))
 
         wandb.log(
             {
