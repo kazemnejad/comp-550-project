@@ -109,32 +109,17 @@ def train(model, embedding_model, train_data, valid_data, tokenizer, hyperparams
             embeddings, _ = embedding_model(
                 input_ids=input_id, attention_mask=mask, return_dict=False
             )
-            with profile(
-                activities=[ProfilerActivity.CUDA, ProfilerActivity.CPU],
-                record_shapes=True,
-                profile_memory=True,
-            ) as prof:
-                with record_function("forward"):
-                    output = model(embeddings, mask)
+            output = model(embeddings, mask)
 
-                with record_function("loss"):
-                    batch_loss = criterion(output, train_label)
-                total_loss_train += batch_loss.item()
+            batch_loss = criterion(output, train_label)
+            total_loss_train += batch_loss.item()
 
-                acc = (output.argmax(dim=1) == train_label).sum().item()
-                total_acc_train += acc
+            acc = (output.argmax(dim=1) == train_label).sum().item()
+            total_acc_train += acc
 
-                model.zero_grad()
-                with record_function("backward"):
-                    batch_loss.backward()
-                optimizer.step()
-            print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=25))
-            print("\n")
-            print(
-                prof.key_averages().table(
-                    sort_by="self_cuda_memory_usage", row_limit=25
-                )
-            )
+            model.zero_grad()
+            batch_loss.backward()
+            optimizer.step()
 
         wandb.log(
             {
