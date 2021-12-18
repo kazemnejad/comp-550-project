@@ -110,6 +110,9 @@ def train(model, train_dataset, valid_dataset, hyperparams):
         model = model.cuda()
         criterion = criterion.cuda()
 
+    wandb.run.summary["Number parameters"] = sum(
+        p.numel() for p in model.parameters() if p.requires_grad
+    )
     for epoch_num in range(hyperparams["epochs"]):
         total_acc_train = 0
         total_loss_train = 0
