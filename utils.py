@@ -116,6 +116,11 @@ def train(model, train_dataset, valid_dataset, hyperparams):
     wandb.run.summary["Number parameters"] = sum(
         p.numel() for p in model.parameters() if p.requires_grad
     )
+    wandb.run.summary["Embedding parameters"] = sum(
+        p.numel() for p in model.embedding_layer.parameters() if p.requires_grad
+    )
+    print(wandb.run.summary["Number parameters"])
+    print(wandb.run.summary["Embedding parameters"])
     for epoch_num in range(hyperparams["epochs"]):
         total_acc_train = 0
         total_loss_train = 0

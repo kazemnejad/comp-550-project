@@ -20,11 +20,11 @@ HYPERPARAMS = {
     "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
-    "wandb": False,
+    "wandb": True,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
-    "kernel_size": 10,
+    "kernel_size": 3,
 }
 
 SWEEP_CONFIG = {
@@ -107,10 +107,10 @@ def train_model():
         train_dataset = torch.load("./data/train_dataset.pt")
         valid_dataset = torch.load("./data/valid_dataset.pt")
 
-    model = MODELS[HYPERPARAMS["model"]](HYPERPARAMS)
+    model = MODELS[wandb.config["model"]](wandb.config)
     wandb.watch(model)
 
-    train(model, train_dataset, valid_dataset, HYPERPARAMS)
+    train(model, train_dataset, valid_dataset, wandb.config)
 
 
 def evaluate_model():
@@ -132,12 +132,12 @@ def evaluate_model():
         )
         test_dataset = torch.load("./data/test_dataset.pt")
 
-    model_artifact = wandb.use_artifact(f"{HYPERPARAMS['model']}-best" + ":latest")
+    model_artifact = wandb.use_artifact(f"{wandb.config['model']}-best" + ":latest")
     model_dir = model_artifact.download()
-    model = torch.load(os.path.join(model_dir, f"{HYPERPARAMS['model']}-best.pt"))
+    model = torch.load(os.path.join(model_dir, f"{wandb.config['model']}-best.pt"))
     wandb.watch(model)
 
-    evaluate(model, test_dataset, HYPERPARAMS)
+    evaluate(model, test_dataset, wandb.config)
 
 
 def create_sweep():
