@@ -15,6 +15,7 @@ HYPERPARAMS = {
     "epochs": 30,
     "lr": 1e-2,
     "weight_decay": 1e-10,
+    "dropout": True,
     "batch_size": 128,
     "vocab_size": 100000,
     "embedding_size": 32,

@@ -27,6 +27,7 @@ class CNNClassifier(nn.Module):
     def __init__(self, hyperparams):
         super(CNNClassifier, self).__init__()
         self.num_classes = hyperparams["num_classes"]
+        self.dropout = hyperparams["dropout"]
         self.layer_sizes = [hyperparams["embedding_size"]] + [
             hyperparams["hidden_dim"] for i in range(hyperparams["num_layers"] - 1)
         ]
@@ -62,8 +63,13 @@ class CNNClassifier(nn.Module):
 
         return output
 
-    def create_conv_block(self, in_features, out_features, *args, **kwargs):
-        return nn.Sequential(
+    def create_conv_block(
+        self, in_features, out_features, dropout=True, *args, **kwargs
+    ):
+        conv_block = [
             nn.Conv1d(in_features, out_features, *args, **kwargs),
             nn.ReLU(inplace=False),
-        )
+        ]
+        if dropout:
+            conv_block += [nn.Dropout()]
+        return nn.Sequential(*conv_block)
