@@ -116,7 +116,7 @@ def evaluate_model():
             config=HYPERPARAMS,
             project="classification_models",
             entity="comp-555-project",
-            job_type="train-model",
+            job_type="evaluate-model",
         )
         test_dataset = wandb.use_artifact("test_dataset" + ":latest")
     else:
@@ -125,11 +125,11 @@ def evaluate_model():
             config=HYPERPARAMS,
             project="classification_models",
             entity="comp-555-project",
-            job_type="train-model",
+            job_type="evaluate-model",
         )
         test_dataset = torch.load("./data/test_dataset.pt")
 
-    model = MODELS[HYPERPARAMS["model"]](HYPERPARAMS)
+    model = wandb.use_artifact(f"{HYPERPARAMS['model']}-best" + ":latest")
     wandb.watch(model)
 
     evaluate(model, test_dataset, HYPERPARAMS)
