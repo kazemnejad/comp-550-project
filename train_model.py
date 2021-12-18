@@ -89,8 +89,12 @@ def train_model():
             entity="comp-555-project",
             job_type="train-model",
         )
-        train_dataset = wandb.use_artifact("train_dataset" + ":latest")
-        valid_dataset = wandb.use_artifact("valid_dataset" + ":latest")
+        train_artifact = wandb.use_artifact("train_dataset" + ":latest")
+        train_dataset_dir = train_artifact.download()
+        train_dataset = torch.load(os.path.join(train_dataset_dir, "train_dataset.pt"))
+        valid_artifact = wandb.use_artifact("valid_dataset" + ":latest")
+        valid_dataset_dir = valid_artifact.download()
+        valid_dataset = torch.load(os.path.join(valid_dataset_dir, "valid_dataset.pt"))
     else:
         os.environ["WANDB_MODE"] = "dryrun"
         wandb.init(
@@ -127,7 +131,9 @@ def evaluate_model():
         )
         test_dataset = torch.load("./data/test_dataset.pt")
 
-    model = wandb.use_artifact(f"{HYPERPARAMS['model']}-best" + ":latest")
+    model_artifact = wandb.use_artifact(f"{HYPERPARAMS['model']}-best" + ":latest")
+    model_dir = model_artifact.download()
+    model = torch.load(os.path.join(model_dir, f"{HYPERPARAMS['model']}-best.pt"))
     wandb.watch(model)
 
     evaluate(model, test_dataset, HYPERPARAMS)
