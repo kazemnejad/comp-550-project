@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from transformers import BertTokenizer, BertModel
 from classifiers import BertClassifier, CNNClassifier
-from utils import train, evaluate, split_train_valid, data_to_df
+from utils import train, evaluate, split_train_valid, data_to_df, get_dataset
 import torch
 from torchtext.datasets import AG_NEWS
 import wandb
@@ -11,11 +11,15 @@ import sys
 
 HYPERPARAMS = {
     "dataset": "AG_NEWS",
+    "embeddings": "bert",
     "num_classes": 4,
     "valid_prop": 0.15,
     "epochs": 5,
     "lr": 1e-4,
+    "weight_decay": 1e-10,
     "batch_size": 32,
+    "vocab_size": 100000,
+    "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
     "wandb": False,
@@ -32,8 +36,10 @@ SWEEP_CONFIG = {
         "num_layers": {"values": [2, 4, 6, 8]},
         "hidden_dim": {"values": [128, 180, 220, 256]},
         "kernel_size": {"values": [3, 7, 11]},
+        "embedding_size": {"values": [32, 64, 128]},
     },
 }
+
 
 MODELS = {
     "cnn": lambda hyperparams: CNNClassifier(hyperparams),
@@ -44,6 +50,39 @@ torch.manual_seed(HYPERPARAMS["seed"])
 np.random.seed(HYPERPARAMS["seed"])
 
 
+def generate_dataset():
+    if HYPERPARAMS["wandb"]:
+        wandb.init(
+            config=HYPERPARAMS,
+            project="classification_models",
+            entity="comp-555-project",
+            job_type="generate-dataset",
+        )
+    else:
+        os.environ["WANDB_MODE"] = "dryrun"
+        wandb.init(
+            config=HYPERPARAMS,
+            project="classification_models",
+            entity="comp-555-project",
+            job_type="generate-dataset",
+        )
+
+    train_iter, test_iter = AG_NEWS(root=".data", split=("train", "test"))
+    train_iter, valid_iter = split_train_valid(train_iter, HYPERPARAMS["valid_prop"])
+
+    train_dataset, valid_dataset, test_dataset = get_dataset(
+        train_iter, valid_iter, test_iter
+    )
+
+    torch.save(train_dataset, "./data/train_dataset.pt")
+    torch.save(valid_dataset, "./data/valid_dataset.pt")
+    torch.save(test_dataset, "./data/test_dataset.pt")
+
+    wandb.log_artifact("./data/train_dataset.pt", name="train_dataset", type="dataset")
+    wandb.log_artifact("./data/valid_dataset.pt", name="valid_dataset", type="dataset")
+    wandb.log_artifact("./data/test_dataset.pt", name="test_dataset", type="dataset")
+
+
 def train_model():
     if HYPERPARAMS["wandb"]:
         wandb.init(
@@ -52,6 +91,8 @@ def train_model():
             entity="comp-555-project",
             job_type="train-model",
         )
+        train_dataset = wandb.use_artifact("train_dataset" + ":latest")
+        valid_dataset = wandb.use_artifact("valid_dataset" + ":latest")
     else:
         os.environ["WANDB_MODE"] = "dryrun"
         wandb.init(
@@ -60,40 +101,38 @@ def train_model():
             entity="comp-555-project",
             job_type="train-model",
         )
-
-    train_iter, _ = AG_NEWS(root=".data", split=("train", "test"))
-
-    train_iter, valid_iter = split_train_valid(train_iter, HYPERPARAMS["valid_prop"])
-
-    train_df = data_to_df(train_iter)
-    valid_df = data_to_df(valid_iter)
-
-    train_df.to_pickle("./data/train_df.pkl")
-    valid_df.to_pickle("./data/valid_df.pkl")
-
-    wandb.log_artifact("./data/train_df.pkl", name="train_dataset", type="dataset")
-    wandb.log_artifact("./data/valid_df.pkl", name="valid_dataset", type="dataset")
-
-    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-    embedding_model = BertModel.from_pretrained("bert-base-cased")
+        train_dataset = torch.load("./data/train_dataset.pt")
+        valid_dataset = torch.load("./data/valid_dataset.pt")
 
     model = MODELS[HYPERPARAMS["model"]](HYPERPARAMS)
     wandb.watch(model)
 
-    train(model, embedding_model, train_df, valid_df, tokenizer, HYPERPARAMS)
+    train(model, train_dataset, valid_dataset, HYPERPARAMS)
 
 
 def evaluate_model():
-    _, test_iter = AG_NEWS(root=".data", split=("train", "test"))
-
-    test_df = data_to_df(test_iter)
-
-    tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-    embedding_model = BertModel.from_pretrained("bert-base-cased")
+    if HYPERPARAMS["wandb"]:
+        wandb.init(
+            config=HYPERPARAMS,
+            project="classification_models",
+            entity="comp-555-project",
+            job_type="train-model",
+        )
+        test_dataset = wandb.use_artifact("test_dataset" + ":latest")
+    else:
+        os.environ["WANDB_MODE"] = "dryrun"
+        wandb.init(
+            config=HYPERPARAMS,
+            project="classification_models",
+            entity="comp-555-project",
+            job_type="train-model",
+        )
+        test_dataset = torch.load("./data/test_dataset.pt")
 
     model = MODELS[HYPERPARAMS["model"]](HYPERPARAMS)
+    wandb.watch(model)
 
-    evaluate(model, embedding_model, test_df, tokenizer)
+    evaluate(model, test_dataset, HYPERPARAMS)
 
 
 def create_sweep():
@@ -112,12 +151,14 @@ def run_agent(sweep_id):
 
 
 if __name__ == "__main__":
-    mode = sys.argv[1]
-    print(mode)
-    if not mode or mode == "train":
+    if len(sys.argv) == 1:
         train_model()
-    elif mode == "sweep":
+    if sys.argv[1] == "sweep":
         create_sweep()
-    elif mode == "agent":
+    elif sys.argv[1] == "agent":
         sweep_id = sys.argv[2]
         run_agent(sweep_id)
+    elif sys.argv[1] == "data":
+        generate_dataset()
+    else:
+        train_model()

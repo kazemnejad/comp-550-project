@@ -27,10 +27,13 @@ class CNNClassifier(nn.Module):
     def __init__(self, hyperparams):
         super(CNNClassifier, self).__init__()
         self.num_classes = hyperparams["num_classes"]
-        self.layer_sizes = [768] + [
+        self.layer_sizes = [hyperparams["embedding_size"]] + [
             hyperparams["hidden_dim"] for i in range(hyperparams["num_layers"] - 1)
         ]
         self.kernel_size = hyperparams["kernel_size"]
+        self.embedding_layer = nn.Embedding(
+            hyperparams["vocab_size"], hyperparams["embedding_size"]
+        )
         self.conv_blocks = nn.ModuleList(
             [
                 self.create_conv_block(
@@ -45,9 +48,10 @@ class CNNClassifier(nn.Module):
             nn.Linear(1024, self.num_classes),
         )
 
-    def forward(self, embeddings, mask):
-        x = embeddings.detach()
+    def forward(self, inputs, mask):
+        x = self.embedding_layer(inputs)
         x = x.permute(0, 2, 1)
+        mask = mask[:, None, :]
         for conv_block in self.conv_blocks:
             x = conv_block(x)
             x = x * mask
