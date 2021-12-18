@@ -106,7 +106,7 @@ def train(model, train_dataset, valid_dataset, hyperparams):
         weight_decay=hyperparams["weight_decay"],
     )
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, factor=0.5, patience=3, min_lr=1e-5,
+        optimizer, factor=0.5, patience=3, min_lr=1e-4,
     )
 
     if use_cuda:
