@@ -12,7 +12,7 @@ HYPERPARAMS = {
     "embeddings": "bert",
     "num_classes": 4,
     "valid_prop": 0.15,
-    "epochs": 5,
+    "epochs": 30,
     "lr": 1e-4,
     "weight_decay": 1e-10,
     "batch_size": 32,
@@ -28,13 +28,14 @@ HYPERPARAMS = {
 }
 
 SWEEP_CONFIG = {
-    "name": "cnn-sweep",
+    "name": "cnn-sweep-lr",
     "method": "grid",
     "parameters": {
         "num_layers": {"values": [2, 4, 6, 8]},
-        "hidden_dim": {"values": [128, 180, 220, 256]},
+        "hidden_dim": {"values": [128, 200, 256]},
         "kernel_size": {"values": [3, 7, 11]},
         "embedding_size": {"values": [32, 64, 128]},
+        # "lr": {"values": [1e-2, 5e-2, 1e-3, 5e-3]}
     },
 }
 
