@@ -28,7 +28,7 @@ HYPERPARAMS = {
 }
 
 SWEEP_CONFIG = {
-    "name": "cnn-sweep-lr",
+    "name": "cnn-sweep-hyperparams",
     "method": "grid",
     "parameters": {
         "num_layers": {"values": [2, 4, 6, 8]},
