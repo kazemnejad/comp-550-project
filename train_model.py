@@ -28,14 +28,14 @@ HYPERPARAMS = {
 }
 
 SWEEP_CONFIG = {
-    "name": "cnn-sweep-hyperparams",
+    "name": "cnn-sweep-lr",
     "method": "grid",
     "parameters": {
-        "num_layers": {"values": [2, 4, 6, 8]},
-        "hidden_dim": {"values": [128, 200, 256]},
-        "kernel_size": {"values": [3, 7, 11]},
-        "embedding_size": {"values": [32, 64, 128]},
-        # "lr": {"values": [1e-2, 5e-2, 1e-3, 5e-3]}
+        # "num_layers": {"values": [2, 4, 6, 8]},
+        # "hidden_dim": {"values": [128, 200, 256]},
+        # "kernel_size": {"values": [3, 7, 11]},
+        # "embedding_size": {"values": [32, 64, 128]},
+        "lr": {"values": [1e-2, 5e-2, 1e-3, 5e-3]}
     },
 }
 
