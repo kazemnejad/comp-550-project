@@ -20,7 +20,7 @@ HYPERPARAMS = {
     "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
-    "wandb": False,
+    "wandb": True,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
