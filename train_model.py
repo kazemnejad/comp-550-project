@@ -1,8 +1,6 @@
 import numpy as np
-import pandas as pd
-from transformers import BertTokenizer, BertModel
 from classifiers import BertClassifier, CNNClassifier
-from utils import train, evaluate, split_train_valid, data_to_df, get_dataset
+from utils import train, evaluate, split_train_valid, get_dataset
 import torch
 from torchtext.datasets import AG_NEWS
 import wandb

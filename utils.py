@@ -27,15 +27,6 @@ def split_train_valid(train_iter, valid_prop):
     return train_iter, valid_iter
 
 
-def data_to_df(data_iter):
-    data = [[sample[1], sample[0]] for sample in data_iter]
-
-    data_df = pd.DataFrame(data)
-    data_df.columns = ["text", "labels"]
-
-    return data_df
-
-
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_iter, label_pipeline, text_pipeline):
         self.labels = []
