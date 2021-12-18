@@ -142,7 +142,7 @@ def train(model, train_dataset, valid_dataset, hyperparams):
         wandb.log(
             {
                 "Train loss": total_loss_train / len(train_dataset),
-                "Train accuracy": total_acc_train / len(valid_dataset),
+                "Train accuracy": total_acc_train / len(train_dataset),
             },
             commit=False,
         )
