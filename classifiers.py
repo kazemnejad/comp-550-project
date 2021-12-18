@@ -64,6 +64,6 @@ class CNNClassifier(nn.Module):
 
     def create_conv_block(self, in_features, out_features, *args, **kwargs):
         return nn.Sequential(
-            nn.Conv1d(in_features, out_features, *args, **kwargs),
+            nn.Conv1d(in_features, out_features, self.kernel_size, *args, **kwargs),
             nn.ReLU(inplace=False),
         )
