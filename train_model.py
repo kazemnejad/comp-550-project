@@ -17,7 +17,7 @@ HYPERPARAMS = {
     "lr": 5e-3,
     "weight_decay": 1e-10,
     "batch_size": 1024,
-    "vocab_size": 100000,
+    "vocab_size": 550000,
     "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
