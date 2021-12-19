@@ -11,7 +11,7 @@ HYPERPARAMS = {
     "dataset": "Yelp",
     "embeddings": "bert",
     "max_len": 1024,
-    "num_classes": 4,
+    "num_classes": 5,
     "valid_prop": 0.15,
     "epochs": 30,
     "lr": 5e-3,
