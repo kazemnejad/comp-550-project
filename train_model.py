@@ -193,7 +193,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "agent":
         sweep_id = sys.argv[2]
         run_agent(sweep_id)
-    elif sys.argv[1] === "data":
+    elif sys.argv[1] == "data":
         generate_dataset()
     else:
         train_model()
