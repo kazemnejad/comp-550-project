@@ -186,7 +186,7 @@ def run_agent(sweep_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) = 1:
+    if len(sys.argv) == 1:
         train_model()
     if sys.argv[1] == "sweep":
         create_sweep()
