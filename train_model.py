@@ -107,12 +107,24 @@ def train_model():
             entity="comp-555-project",
             job_type="train-model",
         )
-        train_artifact = wandb.use_artifact("train_dataset" + ":latest")
+        train_artifact = wandb.use_artifact(
+            f"train_dataset_{HYPERPARAMS['dataset']}" + ":latest"
+        )
         train_dataset_dir = train_artifact.download()
-        train_dataset = torch.load(os.path.join(train_dataset_dir, "train_dataset.pt"))
-        valid_artifact = wandb.use_artifact("valid_dataset" + ":latest")
+        train_dataset = torch.load(
+            os.path.join(
+                train_dataset_dir, f"train_dataset_{HYPERPARAMS['dataset']}.pt"
+            )
+        )
+        valid_artifact = wandb.use_artifact(
+            f"valid_dataset_{HYPERPARAMS['dataset']}" + ":latest"
+        )
         valid_dataset_dir = valid_artifact.download()
-        valid_dataset = torch.load(os.path.join(valid_dataset_dir, "valid_dataset.pt"))
+        valid_dataset = torch.load(
+            os.path.join(
+                valid_dataset_dir, f"valid_dataset_{HYPERPARAMS['dataset']}.pt"
+            )
+        )
     else:
         os.environ["WANDB_MODE"] = "dryrun"
         wandb.init(
@@ -121,8 +133,8 @@ def train_model():
             entity="comp-555-project",
             job_type="train-model",
         )
-        train_dataset = torch.load("./data/train_dataset.pt")
-        valid_dataset = torch.load("./data/valid_dataset.pt")
+        train_dataset = torch.load(f"./data/train_dataset_{HYPERPARAMS['dataset']}.pt")
+        valid_dataset = torch.load(f"./data/valid_dataset_{HYPERPARAMS['dataset']}.pt")
 
     model = MODELS[wandb.config["model"]](wandb.config)
     wandb.watch(model)
