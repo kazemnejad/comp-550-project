@@ -187,10 +187,10 @@ def train(model, train_dataset, valid_dataset, hyperparams):
             )
             best_valid_acc = total_acc_valid / len(valid_dataset)
 
-            torch.save(model.state_dict(), f"./models/{hyperparams['model']}-best.pt")
+            torch.save(model.state_dict(), f"./models/{hyperparams['model']}-{wandb.run.name}-best.pt")
             wandb.log_artifact(
-                f"./models/{hyperparams['model']}-best.pt",
-                name=f"{hyperparams['model']}-best",
+                f"./models/{hyperparams['model']}-{wandb.run.name}-best.pt",
+                name=f"{hyperparams['model']}-{wandb.run.name}-best",
                 type="model",
             )
 
