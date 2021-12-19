@@ -78,7 +78,7 @@ def get_dataset(train_iter, valid_iter, test_iter, sample_len=1024):
         mask = torch.tensor(
             [1] * len(index_list) + [0] * (sample_len - len(index_list))
         )
-        text_sample = [index + 1 for index in vocab(tokenizer(text))] + [0] * (
+        text_sample = [index + 1 for index in index_list] + [0] * (
             sample_len - len(index_list)
         )
         text_sample = torch.tensor(text_sample)
