@@ -38,7 +38,11 @@ class CNNClassifier(nn.Module):
         self.conv_blocks = nn.ModuleList(
             [
                 self.create_conv_block(
-                    in_f, out_f, kernel_size=self.kernel_size, padding="same"
+                    in_f,
+                    out_f,
+                    dropout=self.dropout,
+                    kernel_size=self.kernel_size,
+                    padding="same",
                 )
                 for in_f, out_f in zip(self.layer_sizes, self.layer_sizes[1:])
             ]
@@ -63,9 +67,7 @@ class CNNClassifier(nn.Module):
 
         return output
 
-    def create_conv_block(
-        self, in_features, out_features, dropout=True, *args, **kwargs
-    ):
+    def create_conv_block(self, in_features, out_features, dropout, *args, **kwargs):
         conv_block = [
             nn.Conv1d(in_features, out_features, *args, **kwargs),
             nn.ReLU(inplace=False),
