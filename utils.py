@@ -7,7 +7,6 @@ from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from tqdm import tqdm
 import numpy as np
-import pandas as pd
 import wandb
 
 from torch.profiler import profile, record_function, ProfilerActivity
@@ -31,9 +30,13 @@ class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_iter, label_pipeline, text_pipeline):
         self.labels = []
         self.texts = []
+        self.max_length = 0
         for label, text in data_iter:
+            text, length = text_pipeline(text)
+            if length > self.max_length:
+                self.max_length = length
             self.labels.append(label_pipeline(label))
-            self.texts.append(text_pipeline(text))
+            self.texts.append(text)
 
     def classes(self):
         return self.labels
@@ -56,7 +59,7 @@ class Dataset(torch.utils.data.Dataset):
         return batch_texts, batch_y
 
 
-def get_dataset(train_iter, valid_iter, test_iter, sample_len=512):
+def get_dataset(train_iter, valid_iter, test_iter, sample_len=1024):
     tokenizer = get_tokenizer("basic_english")
 
     def yield_tokens(data_iter):
@@ -66,9 +69,12 @@ def get_dataset(train_iter, valid_iter, test_iter, sample_len=512):
     full_data_iter = chain(train_iter, valid_iter, test_iter)
     vocab = build_vocab_from_iterator(yield_tokens(full_data_iter), specials=["<unk>"])
     vocab.set_default_index(vocab["<unk>"])
+    print(len(vocab))
 
     def text_pipeline(text):
         index_list = vocab(tokenizer(text))
+        if len(index_list) > sample_len:
+            index_list = index_list[:sample_len]
         mask = torch.tensor(
             [1] * len(index_list) + [0] * (sample_len - len(index_list))
         )
@@ -77,7 +83,7 @@ def get_dataset(train_iter, valid_iter, test_iter, sample_len=512):
         )
         text_sample = torch.tensor(text_sample)
 
-        return text_sample, mask
+        return (text_sample, mask), len(index_list)
 
     label_pipeline = lambda x: torch.tensor(int(x) - 1)
 

@@ -10,12 +10,13 @@ import sys
 HYPERPARAMS = {
     "dataset": "Yelp",
     "embeddings": "bert",
+    "max_len": 1024,
     "num_classes": 4,
     "valid_prop": 0.15,
     "epochs": 30,
     "lr": 5e-3,
     "weight_decay": 1e-10,
-    "batch_size": 512,
+    "batch_size": 1024,
     "vocab_size": 100000,
     "embedding_size": 32,
     "model": "cnn",
@@ -75,7 +76,7 @@ def generate_dataset():
     train_iter, valid_iter = split_train_valid(train_iter, HYPERPARAMS["valid_prop"])
 
     train_dataset, valid_dataset, test_dataset = get_dataset(
-        train_iter, valid_iter, test_iter
+        train_iter, valid_iter, test_iter, HYPERPARAMS["max_len"]
     )
 
     torch.save(train_dataset, f"./data/train_dataset_{HYPERPARAMS['dataset']}.pt")
@@ -185,14 +186,14 @@ def run_agent(sweep_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        train_model()
-    if sys.argv[1] == "sweep":
-        create_sweep()
-    elif sys.argv[1] == "agent":
-        sweep_id = sys.argv[2]
-        run_agent(sweep_id)
-    elif sys.argv[1] == "data":
-        generate_dataset()
-    else:
-        train_model()
+    # if len(sys.argv) == 1:
+    #     train_model()
+    # if sys.argv[1] == "sweep":
+    #     create_sweep()
+    # elif sys.argv[1] == "agent":
+    #     sweep_id = sys.argv[2]
+    #     run_agent(sweep_id)
+    # elif sys.argv[1] == "data":
+    generate_dataset()
+    # else:
+    #     train_model()
