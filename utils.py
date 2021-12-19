@@ -105,8 +105,8 @@ def train(model, train_dataset, valid_dataset, hyperparams):
         lr=hyperparams["lr"],
         weight_decay=hyperparams["weight_decay"],
     )
-    scheduler = torch.optim.lr_scheduler.CyclicLR(
-        optimizer, hyperparams["lr"], 1e-2, 400, cycle_momentum=False
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, factor=0.5, patience=3, min_lr=1e-5,
     )
 
     if use_cuda:
@@ -146,17 +146,14 @@ def train(model, train_dataset, valid_dataset, hyperparams):
             model.zero_grad()
             batch_loss.backward()
             optimizer.step()
-            scheduler.step()
 
-            learning_rate = optimizer.param_groups[0]["lr"]
-            wandb.log(
-                {
-                    "Learning rate": learning_rate,
-                    "Train loss": total_loss_train / len(train_dataset),
-                    "Train accuracy": total_acc_train / len(train_dataset),
-                },
-                commit=False,
-            )
+        wandb.log(
+            {
+                "Train loss": total_loss_train / len(train_dataset),
+                "Train accuracy": total_acc_train / len(train_dataset),
+            },
+            commit=False,
+        )
 
         with torch.no_grad():
             for valid_input, valid_label in tqdm(valid_dataloader):
@@ -173,8 +170,12 @@ def train(model, train_dataset, valid_dataset, hyperparams):
                 acc = (output.argmax(dim=1) == valid_label).sum().item()
                 total_acc_valid += acc
 
+        scheduler.step(best_valid_acc)
+        learning_rate = optimizer.param_groups[0]["lr"]
+
         wandb.log(
             {
+                "Learning rate": learning_rate,
                 "Valid loss": total_loss_valid / len(valid_dataset),
                 "Valid accuracy": total_acc_valid / len(valid_dataset),
             }

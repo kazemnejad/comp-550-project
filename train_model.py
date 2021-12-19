@@ -15,8 +15,7 @@ HYPERPARAMS = {
     "epochs": 30,
     "lr": 1e-2,
     "weight_decay": 1e-10,
-    "dropout": True,
-    "batch_size": 512,
+    "batch_size": 128,
     "vocab_size": 100000,
     "embedding_size": 32,
     "model": "cnn",
@@ -29,14 +28,14 @@ HYPERPARAMS = {
 }
 
 SWEEP_CONFIG = {
-    "name": "cnn-sweep-dropout-cyclic-lr-batch=512",
+    "name": "cnn-sweep-hyperparams",
     "method": "grid",
     "parameters": {
-        # "num_layers": {"values": [2, 4, 6, 8]},
-        # "hidden_dim": {"values": [128, 200, 256]},
-        # "kernel_size": {"values": [3, 7, 11]},
-        # "embedding_size": {"values": [32, 64, 128]},
-        "lr": {"values": [1e-2, 5e-2, 1e-3, 5e-3]}
+        "num_layers": {"values": [2, 4, 6, 8]},
+        "hidden_dim": {"values": [128, 200, 256]},
+        "kernel_size": {"values": [3, 7, 11]},
+        "embedding_size": {"values": [32, 64, 128]},
+        # "lr": {"values": [1e-2, 5e-2, 1e-3, 5e-3]}
     },
 }
 
