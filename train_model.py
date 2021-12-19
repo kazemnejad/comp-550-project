@@ -2,13 +2,13 @@ import numpy as np
 from classifiers import BertClassifier, CNNClassifier
 from utils import train, evaluate, split_train_valid, get_dataset
 import torch
-from torchtext.datasets import AG_NEWS
+from torchtext.datasets import AG_NEWS, YelpReviewFull
 import wandb
 import os
 import sys
 
 HYPERPARAMS = {
-    "dataset": "AG_NEWS",
+    "dataset": "Yelp",
     "embeddings": "bert",
     "num_classes": 4,
     "valid_prop": 0.15,
@@ -20,7 +20,7 @@ HYPERPARAMS = {
     "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
-    "wandb": True,
+    "wandb": False,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
@@ -45,6 +45,11 @@ MODELS = {
     "transformer": lambda hyperparams: BertClassifier(hyperparams),
 }
 
+DATASETS = {
+    "AG_NEWS": lambda: AG_NEWS(root=".data", split=("train", "test")),
+    "Yelp": lambda: YelpReviewFull(root=".data", split=("train", "test")),
+}
+
 torch.manual_seed(HYPERPARAMS["seed"])
 np.random.seed(HYPERPARAMS["seed"])
 
@@ -66,20 +71,32 @@ def generate_dataset():
             job_type="generate-dataset",
         )
 
-    train_iter, test_iter = AG_NEWS(root=".data", split=("train", "test"))
+    train_iter, test_iter = DATASETS[HYPERPARAMS["dataset"]]()
     train_iter, valid_iter = split_train_valid(train_iter, HYPERPARAMS["valid_prop"])
 
     train_dataset, valid_dataset, test_dataset = get_dataset(
         train_iter, valid_iter, test_iter
     )
 
-    torch.save(train_dataset, "./data/train_dataset.pt")
-    torch.save(valid_dataset, "./data/valid_dataset.pt")
-    torch.save(test_dataset, "./data/test_dataset.pt")
+    torch.save(train_dataset, f"./data/train_dataset_{HYPERPARAMS['dataset']}.pt")
+    torch.save(valid_dataset, f"./data/valid_dataset_{HYPERPARAMS['dataset']}.pt")
+    torch.save(test_dataset, f"./data/test_dataset_{HYPERPARAMS['dataset']}.pt")
 
-    wandb.log_artifact("./data/train_dataset.pt", name="train_dataset", type="dataset")
-    wandb.log_artifact("./data/valid_dataset.pt", name="valid_dataset", type="dataset")
-    wandb.log_artifact("./data/test_dataset.pt", name="test_dataset", type="dataset")
+    wandb.log_artifact(
+        f"./data/train_dataset_{HYPERPARAMS['dataset']}.pt",
+        name=f"train_dataset_{HYPERPARAMS['dataset']}",
+        type="dataset",
+    )
+    wandb.log_artifact(
+        f"./data/valid_dataset_{HYPERPARAMS['dataset']}.pt",
+        name=f"valid_dataset_{HYPERPARAMS['dataset']}",
+        type="dataset",
+    )
+    wandb.log_artifact(
+        f"./data/test_dataset_{HYPERPARAMS['dataset']}.pt",
+        name=f"test_dataset_{HYPERPARAMS['dataset']}",
+        type="dataset",
+    )
 
 
 def train_model():
@@ -156,14 +173,14 @@ def run_agent(sweep_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        train_model()
-    if sys.argv[1] == "sweep":
-        create_sweep()
-    elif sys.argv[1] == "agent":
-        sweep_id = sys.argv[2]
-        run_agent(sweep_id)
-    elif sys.argv[1] == "data":
-        generate_dataset()
-    else:
-        train_model()
+    # if len(sys.argv) == 1:
+    #     train_model()
+    # if sys.argv[1] == "sweep":
+    #     create_sweep()
+    # elif sys.argv[1] == "agent":
+    #     sweep_id = sys.argv[2]
+    #     run_agent(sweep_id)
+    # elif sys.argv[1] == "data":
+    generate_dataset()
+    # else:
+    #     train_model()

@@ -83,7 +83,7 @@ def get_dataset(train_iter, valid_iter, test_iter, sample_len=512):
 
     train_dataset = Dataset(train_iter, label_pipeline, text_pipeline)
     valid_dataset = Dataset(valid_iter, label_pipeline, text_pipeline)
-    test_dataset = Dataset(train_iter, label_pipeline, text_pipeline)
+    test_dataset = Dataset(test_iter, label_pipeline, text_pipeline)
 
     return train_dataset, valid_dataset, test_dataset
 
