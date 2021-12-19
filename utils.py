@@ -121,12 +121,12 @@ def train(model, train_dataset, valid_dataset, hyperparams):
     )
     print(wandb.run.summary["Number parameters"])
     print(wandb.run.summary["Embedding parameters"])
+    best_valid_acc = 0
     for epoch_num in range(hyperparams["epochs"]):
         total_acc_train = 0
         total_loss_train = 0
         total_acc_valid = 0
         total_loss_valid = 0
-        best_valid_acc = 0
 
         model.train()
         for train_input, train_label in tqdm(train_dataloader):
@@ -187,7 +187,10 @@ def train(model, train_dataset, valid_dataset, hyperparams):
             )
             best_valid_acc = total_acc_valid / len(valid_dataset)
 
-            torch.save(model.state_dict(), f"./models/{hyperparams['model']}-{wandb.run.name}-best.pt")
+            torch.save(
+                model.state_dict(),
+                f"./models/{hyperparams['model']}-{wandb.run.name}-best.pt",
+            )
             wandb.log_artifact(
                 f"./models/{hyperparams['model']}-{wandb.run.name}-best.pt",
                 name=f"{hyperparams['model']}-{wandb.run.name}-best",
