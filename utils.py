@@ -59,8 +59,10 @@ class Dataset(torch.utils.data.Dataset):
         return batch_texts, batch_y
 
 
-def get_dataset(train_iter, valid_iter, test_iter, sample_len=1024):
-    tokenizer = get_tokenizer("basic_english")
+def get_dataset(
+    train_iter, valid_iter, test_iter, sample_len=1024, tokenizer_type="simple-english"
+):
+    tokenizer = get_tokenizer(tokenizer_type)
 
     def yield_tokens(data_iter):
         for _, text in data_iter:

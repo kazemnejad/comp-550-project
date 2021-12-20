@@ -1,5 +1,5 @@
 import numpy as np
-from classifiers import BertClassifier, CNNClassifier
+from classifiers import BertClassifier, CNNClassifier, LSTMClassifier, TransformerClassifier
 from utils import train, evaluate, split_train_valid, get_dataset
 import torch
 from torchtext.datasets import AG_NEWS, YelpReviewFull
@@ -9,7 +9,7 @@ import sys
 
 HYPERPARAMS = {
     "dataset": "Yelp",
-    "embeddings": "bert",
+    "tokenizer": "spacy",
     "max_len": 1024,
     "num_classes": 5,
     "valid_prop": 0.15,
@@ -21,11 +21,18 @@ HYPERPARAMS = {
     "embedding_size": 32,
     "model": "cnn",
     "seed": 0,
-    "wandb": True,
+    "wandb": False,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
     "kernel_size": 3,
+    # transformer hyperparams
+    "num_head": 10,
+    "num_layers": 3,
+    "hidden_dim": 256,
+    # lstm hyperparams
+    "num_layers": 3,
+    "hidden_dim": 256,
 }
 
 SWEEP_CONFIG = {
@@ -43,7 +50,8 @@ SWEEP_CONFIG = {
 
 MODELS = {
     "cnn": lambda hyperparams: CNNClassifier(hyperparams),
-    "transformer": lambda hyperparams: BertClassifier(hyperparams),
+    "transformer": lambda hyperparams: TransformerClassifier(hyperparams),
+    "lstm": lambda hyperparams: LSTMClassifier(hyperparams),
 }
 
 DATASETS = {
@@ -76,7 +84,11 @@ def generate_dataset():
     train_iter, valid_iter = split_train_valid(train_iter, HYPERPARAMS["valid_prop"])
 
     train_dataset, valid_dataset, test_dataset = get_dataset(
-        train_iter, valid_iter, test_iter, HYPERPARAMS["max_len"]
+        train_iter,
+        valid_iter,
+        test_iter,
+        HYPERPARAMS["max_len"],
+        HYPERPARAMS["tokenizer"],
     )
 
     torch.save(train_dataset, f"./data/train_dataset_{HYPERPARAMS['dataset']}.pt")
