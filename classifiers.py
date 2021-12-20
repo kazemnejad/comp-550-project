@@ -80,10 +80,12 @@ class PositionalEncoding(nn.Module):
         pe = torch.zeros(max_len, 1, embedding_size)
         pe[:, 0, 0::2] = torch.sin(position * div_term)
         pe[:, 0, 1::2] = torch.cos(position * div_term)
+        pe = pe.permute(1, 0, 2)
         self.register_buffer("pe", pe)
 
     def forward(self, x):
         x = x + self.pe[: x.size(0)]
+        return x
 
 
 class TransformerClassifier(nn.Module):
@@ -91,33 +93,38 @@ class TransformerClassifier(nn.Module):
         super(TransformerClassifier, self).__init__()
         self.num_classes = hyperparams["num_classes"]
         self.embedding_size = hyperparams["embedding_size"]
-        self.layer_sizes = [hyperparams["embedding_size"]] + [
-            hyperparams["hidden_dim"] for i in range(hyperparams["num_layers"] - 1)
-        ]
+        self.num_heads = hyperparams["num_heads"]
         self.embedding_layer = nn.Embedding(
             hyperparams["vocab_size"], hyperparams["embedding_size"]
         )
-        self.pos_encoder = PositionalEncoding(hyperparams["embedding_size"])
+        self.pos_encoder = PositionalEncoding(
+            hyperparams["embedding_size"], hyperparams["max_len"]
+        )
         encoder_layers = nn.TransformerEncoderLayer(
             hyperparams["embedding_size"],
             hyperparams["num_heads"],
-            hyperparams["hidden_dim"],
+            hyperparams["embedding_size"],
+            batch_first=True,
         )
         self.transformer_encoder = nn.TransformerEncoder(
             encoder_layers, hyperparams["num_layers"]
         )
         self.output_layer = nn.Sequential(
-            nn.Linear(self.layer_sizes[-1], 1024),
+            nn.Linear(hyperparams["embedding_size"], 1024),
             nn.ReLU(inplace=False),
             nn.Linear(1024, self.num_classes),
         )
 
     def forward(self, inputs, mask):
-        inputs = self.encoder(inputs) * math.sqrt(self.embedding_size)
+        mask = mask.float()
+        num_tokens = torch.sum(mask)
+        mask = torch.einsum("ij,ik->ijk", mask, mask)
+        mask = mask.repeat(self.num_heads, 1, 1)
+        inputs = self.embedding_layer(inputs) * math.sqrt(self.embedding_size)
         inputs = self.pos_encoder(inputs)
         output = self.transformer_encoder(inputs, mask)
 
-        pool_output = torch.sum(output, 2) / torch.sum(mask)
+        pool_output = torch.sum(output, 1) / num_tokens
 
         output = self.output_layer(pool_output)
 
@@ -142,15 +149,15 @@ class LSTMClassifier(nn.Module):
             bidirectional=True,
         )
         self.output_layer = nn.Sequential(
-            nn.Linear(self.layer_sizes[-1], 1024),
+            nn.Linear(hyperparams["hidden_dim"]*2, 1024),
             nn.ReLU(inplace=False),
             nn.Linear(1024, self.num_classes),
         )
 
     def forward(self, inputs, _):
         x = self.embedding_layer(inputs)
-        x = x.permute(0, 2, 1)
-        x = self.lstm(x)
+        # x = x.permute(0, 2, 1)
+        x, _ = self.lstm(x)
 
         output = self.output_layer(x[:, -1, :])
 

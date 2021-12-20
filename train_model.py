@@ -1,5 +1,10 @@
 import numpy as np
-from classifiers import BertClassifier, CNNClassifier, LSTMClassifier, TransformerClassifier
+from classifiers import (
+    BertClassifier,
+    CNNClassifier,
+    LSTMClassifier,
+    TransformerClassifier,
+)
 from utils import train, evaluate, split_train_valid, get_dataset
 import torch
 from torchtext.datasets import AG_NEWS, YelpReviewFull
@@ -8,18 +13,18 @@ import os
 import sys
 
 HYPERPARAMS = {
-    "dataset": "Yelp",
-    "tokenizer": "spacy",
-    "max_len": 1024,
+    "dataset": "AG_NEWS",
+    "tokenizer": "basic_english",
+    "max_len": 512,
     "num_classes": 5,
     "valid_prop": 0.15,
     "epochs": 30,
     "lr": 5e-3,
     "weight_decay": 1e-10,
-    "batch_size": 1024,
-    "vocab_size": 550000,
+    "batch_size": 16,
+    "vocab_size": 100000,
     "embedding_size": 32,
-    "model": "cnn",
+    "model": "lstm",
     "seed": 0,
     "wandb": False,
     # cnn hyperparams
@@ -27,9 +32,8 @@ HYPERPARAMS = {
     "hidden_dim": 256,
     "kernel_size": 3,
     # transformer hyperparams
-    "num_head": 10,
+    "num_heads": 4,
     "num_layers": 3,
-    "hidden_dim": 256,
     # lstm hyperparams
     "num_layers": 3,
     "hidden_dim": 256,
