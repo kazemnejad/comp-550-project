@@ -20,7 +20,7 @@ python grid_search.py lstm agnews
 ```
 python grid_search.py transformer agnews
 ```
-You can run another instance of each other nodes if you have more GPUs available.
+You can run another instance of each on other nodes if you have more GPUs available.
 ## Generate the plots
 Follow the instructions in `analyze.ipynb`
 
