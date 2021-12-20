@@ -1,5 +1,5 @@
-wandb
-.data
-.vscode
-.DS_Store
-*.pyc
+__pycache__
+optuna/
+data/
+tmp/
+vocabulary.tar.gz
