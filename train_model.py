@@ -13,7 +13,7 @@ import os
 import sys
 
 HYPERPARAMS = {
-    "dataset": "AG_NEWS",
+    "dataset": "Yelp",
     "tokenizer": "basic_english",
     "max_len": 512,
     "num_classes": 5,
@@ -24,9 +24,9 @@ HYPERPARAMS = {
     "batch_size": 16,
     "vocab_size": 100000,
     "embedding_size": 32,
-    "model": "lstm",
+    "model": "transformer",
     "seed": 0,
-    "wandb": False,
+    "wandb": True,
     # cnn hyperparams
     "num_layers": 3,
     "hidden_dim": 256,

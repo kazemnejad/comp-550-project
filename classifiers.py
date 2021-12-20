@@ -116,15 +116,13 @@ class TransformerClassifier(nn.Module):
         )
 
     def forward(self, inputs, mask):
-        mask = mask.float()
-        num_tokens = torch.sum(mask)
-        mask = torch.einsum("ij,ik->ijk", mask, mask)
+        # mask = torch.einsum("ij,ik->ijk", mask, mask)
         mask = mask.repeat(self.num_heads, 1, 1)
         inputs = self.embedding_layer(inputs) * math.sqrt(self.embedding_size)
         inputs = self.pos_encoder(inputs)
-        output = self.transformer_encoder(inputs, mask)
+        output = self.transformer_encoder(inputs)
 
-        pool_output = torch.sum(output, 1) / num_tokens
+        pool_output = torch.sum(output, 1)
 
         output = self.output_layer(pool_output)
 
@@ -156,7 +154,6 @@ class LSTMClassifier(nn.Module):
 
     def forward(self, inputs, _):
         x = self.embedding_layer(inputs)
-        # x = x.permute(0, 2, 1)
         x, _ = self.lstm(x)
 
         output = self.output_layer(x[:, -1, :])
